@@ -4,30 +4,30 @@ const EVOLUTIONS = {
     label: "グー", icon: "✊",
     imgPrefix: "gu",
     stages: [
-      { name: "石",             atk: 10   },
-      { name: "鋼",             atk: 45   },
-      { name: "ダイアモンド",   atk: 180  },
-      { name: "神の感謝の正拳", atk: 9999 },
+      { name: "石" },
+      { name: "鋼" },
+      { name: "ダイアモンド" },
+      { name: "神の感謝の正拳" },
     ],
   },
   scissors: {
     label: "チョキ", icon: "✌",
     imgPrefix: "cho",
     stages: [
-      { name: "ハサミ", atk: 12   },
-      { name: "日本刀", atk: 50   },
-      { name: "レーザーカッター", atk: 200  },
-      { name: "悪魔の裁断",       atk: 9999 },
+      { name: "ハサミ" },
+      { name: "日本刀" },
+      { name: "レーザーカッター" },
+      { name: "悪魔の裁断" },
     ],
   },
   paper: {
     label: "パー", icon: "✋",
     imgPrefix: "par",
     stages: [
-      { name: "紙",               atk: 8    },
-      { name: "防弾チョッキ",     atk: 40   },
-      { name: "カーボンファイバー", atk: 170  },
-      { name: "女神の結界",       atk: 9999 },
+      { name: "紙" },
+      { name: "防弾チョッキ" },
+      { name: "カーボンファイバー" },
+      { name: "女神の結界" },
     ],
   },
 };
@@ -37,6 +37,25 @@ const MAX_TIER = 3;
 
 const TIER_COLOR = ["#9a93b8", "#7adfff", "#c98cff", "#ffd66b"];
 const TIER_LABEL = ["NORMAL", "RARE", "EPIC", "LEGENDARY"];
+
+const INIT_TIERS = () => ({ rock: 0, scissors: 0, paper: 0 });
+
+/*
+  ATK計算:
+    Lv.1: 100 + rand(0~200)  MAX:200
+    Lv.2: 200 + rand(0~200)  MAX:300
+    Lv.3: 300 + rand(0~200)  MAX:400
+    Lv.4: 400 + rand(0~200)  MAX:500
+  じゃんけん勝者は x2
+*/
+function calcAtk(tier) {
+  return (tier + 1) * 100 + Math.floor(Math.random() * 201);
+}
+
+function atkRange(tier) {
+  const base = (tier + 1) * 100;
+  return `${base}〜${base + 200}`;
+}
 
 function imgPath(shape, tier) {
   return `img/${EVOLUTIONS[shape].imgPrefix}_lv${tier + 1}.png`;
@@ -56,8 +75,8 @@ function judge(a, b) {
 let state = {
   playerShape:   "rock",
   computerShape: "paper",
-  playerTier:    0,
-  computerTier:  0,
+  playerTiers:   INIT_TIERS(),   // shape別に個別管理
+  computerTiers: INIT_TIERS(),
   result:        "idle",
   round:         0,
   pScore:        0,
@@ -65,24 +84,28 @@ let state = {
   log:           [],
   reveal:        true,
   lastMove:      null,
+  lastBattle:    null,
   animating:     false,
   shuffling:     false,
 };
 
 /* ── Render helpers ── */
 
-function renderPanel(panelEl, side, shape, tier, reveal, shuffling) {
-  const data  = EVOLUTIONS[shape];
-  const stage = data.stages[tier];
+// tiers: { rock:n, scissors:n, paper:n } — shapeごとのtierオブジェクト
+function renderPanel(panelEl, side, shape, tiers, reveal, shuffling, battleAtk = null) {
+  const tier      = tiers[shape];          // 現在表示中のshapeのtier
+  const data      = EVOLUTIONS[shape];
+  const stage     = data.stages[tier];
   const tierColor = TIER_COLOR[tier];
   const tierLabel = TIER_LABEL[tier];
 
+  // CSS tierカラー変数を現在のshapeのtierで制御
   panelEl.dataset.tier = tier;
 
   // Identity
   panelEl.querySelector(".base-label").textContent = data.label;
 
-  // Glyph box reveal/shuffle state
+  // Glyph box
   const glyphBox = panelEl.querySelector(".glyph-box");
   glyphBox.classList.toggle("revealed", reveal);
   glyphBox.classList.toggle("shuffling", shuffling);
@@ -102,32 +125,46 @@ function renderPanel(panelEl, side, shape, tier, reveal, shuffling) {
   panelEl.querySelector(".level-value").textContent    = `Lv.${tier + 1}`;
   panelEl.querySelector(".tier-label-sub").textContent = tierLabel;
 
-  // Attack
-  panelEl.querySelector(".atk-value").textContent = stage.atk.toLocaleString();
+  // ATK: バトル結果があれば実数値、なければ期待レンジを表示
+  const atkEl = panelEl.querySelector(".atk-value");
+  if (battleAtk !== null) {
+    atkEl.textContent = battleAtk.doubled
+      ? `${battleAtk.value.toLocaleString()} ×2`
+      : battleAtk.value.toLocaleString();
+  } else {
+    atkEl.textContent = atkRange(tier);
+  }
 
-  // Progress bar
+  // Progress bar (現在shapeのtierで表示)
   panelEl.querySelectorAll(".progress-seg").forEach((seg, i) => {
     seg.classList.toggle("active", i <= tier);
   });
   panelEl.querySelector(".progress-count").textContent = `${tier + 1}/4`;
 
-  // Arsenal
+  // Arsenal: 各shapeが独自のtierを持つ
   SHAPES.forEach(s => {
     const item      = panelEl.querySelector(`.arsenal-item[data-shape="${s}"]`);
     const ev        = EVOLUTIONS[s];
-    const st        = ev.stages[tier];
+    const sTier     = tiers[s];              // このshape固有のtier
+    const st        = ev.stages[sTier];
+    const sTierColor = TIER_COLOR[sTier];
     const isCurrent = s === shape;
 
     item.classList.toggle("active", isCurrent);
     item.style.background  = isCurrent ? `${tierColor}14` : "rgba(255,255,255,.025)";
     item.style.borderColor = isCurrent ? `${tierColor}55` : "rgba(255,255,255,.06)";
 
+    // 画像はそのshape固有のtierで表示
     const glEl = item.querySelector(".arsenal-glyph");
-    glEl.src = imgPath(s, tier);
+    glEl.src = imgPath(s, sTier);
     glEl.alt = st.name;
 
     item.querySelector(".arsenal-name").textContent = st.name;
-    item.querySelector(".arsenal-lv").textContent   = `Lv.${tier + 1}`;
+
+    // Lv表示はshape固有のtierで色も個別に設定
+    const lvEl = item.querySelector(".arsenal-lv");
+    lvEl.textContent  = `Lv.${sTier + 1}`;
+    lvEl.style.color  = sTierColor;
   });
 }
 
@@ -136,8 +173,8 @@ function renderResultBanner(result, round, pScore, cScore, lastMove) {
   banner.dataset.result = result;
 
   const config = {
-    win:  { en: "WIN",   jp: "勝利", hint: "進化チャンス！" },
-    lose: { en: "LOSE",  jp: "敗北", hint: "次は気をつけよう" },
+    win:  { en: "WIN",   jp: "勝利", hint: "使った手が進化！" },
+    lose: { en: "LOSE",  jp: "敗北", hint: "使った手がリセットされた…" },
     draw: { en: "DRAW",  jp: "引分", hint: "もう一度勝負" },
     idle: { en: "READY", jp: "待機", hint: "手を選択してください" },
   };
@@ -153,40 +190,47 @@ function renderResultBanner(result, round, pScore, cScore, lastMove) {
 
   const lastEl = document.getElementById("last-content");
   if (lastMove) {
+    const fmt = (m) => {
+      const badge = m.doubled
+        ? ` <span style="color:var(--gold);font-size:10px;letter-spacing:.05em">[${m.atk} ×2]</span>`
+        : ` <span style="color:var(--ink-dim);font-size:10px;letter-spacing:.05em">[${m.atk}]</span>`;
+      return m.label + badge;
+    };
     lastEl.innerHTML =
-      `<span style="color:var(--player)">${lastMove.player.label}</span>` +
+      `<span style="color:var(--player)">${fmt(lastMove.player)}</span>` +
       `<span style="margin:0 10px;color:var(--ink-dim)">VS</span>` +
-      `<span style="color:var(--computer)">${lastMove.computer.label}</span>`;
+      `<span style="color:var(--computer)">${fmt(lastMove.computer)}</span>`;
   } else {
     lastEl.innerHTML = `<span style="color:var(--ink-dim)">—</span>`;
   }
 }
 
-function renderChoiceButtons(playerShape, playerTier, disabled) {
-  const tierColor = TIER_COLOR[playerTier];
-
+// 各ボタンはそのshape固有のtierを表示
+function renderChoiceButtons(playerShape, playerTiers, disabled) {
   document.querySelectorAll(".choice-btn").forEach(btn => {
-    const shape  = btn.dataset.shape;
-    const stg    = EVOLUTIONS[shape].stages[playerTier];
-    const active = shape === playerShape;
+    const s      = btn.dataset.shape;
+    const sTier  = playerTiers[s];
+    const stage  = EVOLUTIONS[s].stages[sTier];
+    const tColor = TIER_COLOR[sTier];
+    const active = s === playerShape;
 
     btn.disabled = disabled;
     btn.classList.toggle("active", active);
 
     const badge = btn.querySelector(".btn-level-badge");
-    badge.textContent  = `L${playerTier + 1}`;
-    badge.style.border = `1px solid ${tierColor}`;
-    badge.style.color  = tierColor;
+    badge.textContent  = `L${sTier + 1}`;
+    badge.style.border = `1px solid ${tColor}`;
+    badge.style.color  = tColor;
 
-    btn.querySelector(".btn-evo-name").textContent = stg.name;
+    btn.querySelector(".btn-evo-name").textContent = stage.name;
 
     const lvBadge = btn.querySelector(".btn-lv-badge");
-    lvBadge.textContent      = `Lv.${playerTier + 1}`;
-    lvBadge.style.color      = tierColor;
-    lvBadge.style.border     = `1px solid ${tierColor}55`;
-    lvBadge.style.background = `${tierColor}11`;
+    lvBadge.textContent      = `Lv.${sTier + 1}`;
+    lvBadge.style.color      = tColor;
+    lvBadge.style.border     = `1px solid ${tColor}55`;
+    lvBadge.style.background = `${tColor}11`;
 
-    btn.querySelector(".btn-atk").textContent = `⚔ ${stg.atk.toLocaleString()}`;
+    btn.querySelector(".btn-atk").textContent = `⚔ ${atkRange(sTier)}`;
   });
 }
 
@@ -202,13 +246,17 @@ function renderLog(log) {
 }
 
 function render() {
-  const { playerShape, computerShape, playerTier, computerTier,
-          result, round, pScore, cScore, log, reveal, lastMove, animating, shuffling } = state;
+  const { playerShape, computerShape, playerTiers, computerTiers,
+          result, round, pScore, cScore, log, reveal, lastMove,
+          lastBattle, animating, shuffling } = state;
 
-  renderPanel(document.getElementById("computer-panel"), "computer", computerShape, computerTier, reveal, shuffling);
-  renderPanel(document.getElementById("player-panel"),   "player",  playerShape,   playerTier,   reveal, false);
+  const playerBattleAtk   = lastBattle ? { value: lastBattle.playerAtk,   doubled: lastBattle.playerDoubled }   : null;
+  const computerBattleAtk = lastBattle ? { value: lastBattle.computerAtk, doubled: lastBattle.computerDoubled } : null;
+
+  renderPanel(document.getElementById("computer-panel"), "computer", computerShape, computerTiers, reveal, shuffling, computerBattleAtk);
+  renderPanel(document.getElementById("player-panel"),   "player",  playerShape,   playerTiers,   reveal, false,     playerBattleAtk);
   renderResultBanner(result, round, pScore, cScore, lastMove);
-  renderChoiceButtons(playerShape, playerTier, animating);
+  renderChoiceButtons(playerShape, playerTiers, animating);
   renderLog(log);
 }
 
@@ -216,9 +264,10 @@ function render() {
 
 function play(shape) {
   if (state.animating) return;
-  state.animating = true;
-  state.shuffling = true;
-  state.reveal    = false;
+  state.animating  = true;
+  state.shuffling  = true;
+  state.reveal     = false;
+  state.lastBattle = null;
   render();
 
   const cpuPick       = SHAPES[Math.floor(Math.random() * 3)];
@@ -227,7 +276,7 @@ function play(shape) {
   const cycle = setInterval(() => {
     state.computerShape = SHAPES[tick % 3];
     tick++;
-    renderPanel(computerPanel, "computer", state.computerShape, state.computerTier, false, true);
+    renderPanel(computerPanel, "computer", state.computerShape, state.computerTiers, false, true);
   }, 80);
 
   setTimeout(() => {
@@ -238,26 +287,51 @@ function play(shape) {
     state.playerShape   = shape;
     state.reveal        = true;
 
-    const verdict = judge(shape, cpuPick);
-    const r = verdict === 0 ? "draw" : verdict === 1 ? "win" : "lose";
+    // 使った手それぞれのtierを取得
+    const prevPlayerTier   = state.playerTiers[shape];
+    const prevComputerTier = state.computerTiers[cpuPick];
+
+    // じゃんけん判定 (1=勝ち, 0=引き分け, -1=負け)
+    const rps = judge(shape, cpuPick);
+
+    // ATK計算: 勝者は×2
+    const playerDoubled    = rps === 1;
+    const computerDoubled  = rps === -1;
+    const playerBaseAtk    = calcAtk(prevPlayerTier);
+    const computerBaseAtk  = calcAtk(prevComputerTier);
+    const playerFinalAtk   = playerDoubled   ? playerBaseAtk   * 2 : playerBaseAtk;
+    const computerFinalAtk = computerDoubled ? computerBaseAtk * 2 : computerBaseAtk;
+
+    // 最終ATKの大小で勝敗決定
+    let r;
+    if      (playerFinalAtk > computerFinalAtk) r = "win";
+    else if (computerFinalAtk > playerFinalAtk) r = "lose";
+    else                                         r = "draw";
 
     state.result = r;
     state.round++;
 
-    const prevPlayerTier   = state.playerTier;
-    const prevComputerTier = state.computerTier;
-
-    state.lastMove = {
-      player:   { label: EVOLUTIONS[shape].stages[prevPlayerTier].name },
-      computer: { label: EVOLUTIONS[cpuPick].stages[prevComputerTier].name },
+    state.lastBattle = {
+      playerAtk:      playerFinalAtk,
+      computerAtk:    computerFinalAtk,
+      playerDoubled,
+      computerDoubled,
     };
 
+    state.lastMove = {
+      player:   { label: EVOLUTIONS[shape].stages[prevPlayerTier].name,    atk: playerFinalAtk,   doubled: playerDoubled },
+      computer: { label: EVOLUTIONS[cpuPick].stages[prevComputerTier].name, atk: computerFinalAtk, doubled: computerDoubled },
+    };
+
+    // 勝者: 使った手だけ tier+1
+    // 敗者: 使った手だけ tier→0 リセット
     if (r === "win") {
-      state.playerTier = Math.min(MAX_TIER, prevPlayerTier + 1);
+      state.playerTiers[shape]   = Math.min(MAX_TIER, prevPlayerTier + 1);
+      state.computerTiers[cpuPick] = 0;
       state.pScore++;
-    }
-    if (r === "lose") {
-      state.computerTier = Math.min(MAX_TIER, prevComputerTier + 1);
+    } else if (r === "lose") {
+      state.computerTiers[cpuPick] = Math.min(MAX_TIER, prevComputerTier + 1);
+      state.playerTiers[shape]     = 0;
       state.cScore++;
     }
 
@@ -272,8 +346,8 @@ function reset() {
   state = {
     playerShape:   "rock",
     computerShape: "paper",
-    playerTier:    0,
-    computerTier:  0,
+    playerTiers:   INIT_TIERS(),
+    computerTiers: INIT_TIERS(),
     result:        "idle",
     round:         0,
     pScore:        0,
@@ -281,6 +355,7 @@ function reset() {
     log:           [],
     reveal:        true,
     lastMove:      null,
+    lastBattle:    null,
     animating:     false,
     shuffling:     false,
   };
