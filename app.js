@@ -1,4 +1,4 @@
-/* ── Evolution data ── */
+/* ── 進化データ / カラーテーマ ── */
 const EVOLUTIONS = {
   rock: {
     label: "グー", icon: "✊",
@@ -40,6 +40,7 @@ const TIER_LABEL = ["NORMAL", "RARE", "EPIC", "LEGENDARY"];
 
 const INIT_TIERS = () => ({ rock: 0, scissors: 0, paper: 0 });
 
+//攻撃力ロジック
 /*
   ATK計算:
     Lv.1: 100 + rand(0~200)  MAX:200
@@ -71,10 +72,10 @@ function judge(a, b) {
   return -1;
 }
 
-/* ── Game state ── */
+/* ── ゲーム画面 初期設定 ── */
 let state = {
   playerShape:   "rock",
-  computerShape: "paper",
+  computerShape: "scissors",
   playerTiers:   INIT_TIERS(),   // shape別に個別管理
   computerTiers: INIT_TIERS(),
   result:        "idle",
@@ -174,7 +175,7 @@ function renderResultBanner(result, round, pScore, cScore, lastMove) {
 
   const config = {
     win:  { en: "WIN",   jp: "勝利", hint: "使った手が進化！" },
-    lose: { en: "LOSE",  jp: "敗北", hint: "使った手がリセットされた…" },
+    lose: { en: "LOSE",  jp: "敗北", hint: "使った手がLv.1に戻った…" },
     draw: { en: "DRAW",  jp: "引分", hint: "もう一度勝負" },
     idle: { en: "READY", jp: "待機", hint: "手を選択してください" },
   };
@@ -260,7 +261,7 @@ function render() {
   renderLog(log);
 }
 
-/* ── Game logic ── */
+/* ── ゲームロジック── */
 
 function play(shape) {
   if (state.animating) return;
@@ -342,6 +343,7 @@ function play(shape) {
   }, 480);
 }
 
+// リセットの設定：カウンターのリセットなど
 function reset() {
   state = {
     playerShape:   "rock",
