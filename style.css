@@ -468,9 +468,18 @@ body::before {
   background: currentColor; opacity: .4;
   display: inline-block;
 }
+verdict-en{
+
+}
+.verdict-jp{
+  font-size: 42px;
+  padding-bottom: 4px;
+
+}
 .verdict-hint {
   font-family: "JetBrains Mono", monospace;
   font-size: 11px; letter-spacing: .25em; color: var(--ink-mute);
+  margin-top: 8px;
 }
 .banner-score {
   display: flex; justify-content: flex-end; align-items: center; gap: 18px;
