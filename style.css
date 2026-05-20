@@ -21,7 +21,6 @@
 /* ── Tier CSS variables (set via data-tier on .hand-panel) ── */
 .hand-panel[data-tier="0"] {
   --tier-color: #9a93b8;
-  --tier-label: "NORMAL";
   --tier-bg: linear-gradient(135deg, #2a2541, #1a1730);
   --ring-color: rgba(255,255,255,.08);
   --glow: 0 0 0px transparent;
@@ -238,8 +237,8 @@ body::before {
   transform: scale(.92);
   transition: transform .35s cubic-bezier(.2,.9,.3,1.4), box-shadow .4s ease, border-color .4s ease;
 }
-.glyph-box.revealed        { transform: scale(1); }
-.glyph-box.shuffling       { animation: shuffle .16s ease-in-out infinite; }
+.glyph-box.revealed          { transform: scale(1); }
+.glyph-box.shuffling         { animation: shuffle .16s ease-in-out infinite; }
 .glyph-box.revealed.shuffling { transform: scale(.95); }
 
 .glyph-ring {
@@ -273,19 +272,18 @@ body::before {
 [data-tier="2"] .spark,
 [data-tier="3"] .spark { display: block; }
 
-/* ── Glyph text ── */
-.glyph-text {
-  font-family: "Noto Serif JP", serif;
-  font-weight: 900;
-  line-height: 1;
-  color: #fff;
+/* ── Glyph image ── */
+.glyph-img {
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
   user-select: none;
-  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
 }
-[data-tier="2"] .glyph-text { color: #ffe9c2; }
-[data-tier="3"] .glyph-text { color: var(--gold); }
-[data-side="player"]   .glyph-text { text-shadow: 0 0 16px #3ddff5aa, 0 2px 0 rgba(0,0,0,.4); }
-[data-side="computer"] .glyph-text { text-shadow: 0 0 16px #ff4d8daa, 0 2px 0 rgba(0,0,0,.4); }
+[data-side="player"]   .glyph-img { filter: drop-shadow(0 0 8px #3ddff5aa); }
+[data-side="computer"] .glyph-img { filter: drop-shadow(0 0 8px #ff4d8daa); }
+[data-tier="2"] .glyph-img        { filter: drop-shadow(0 0 12px #c98cffaa); }
+[data-tier="3"] .glyph-img        { filter: drop-shadow(0 0 16px #ffd66bcc); }
 
 .tier-badge {
   position: absolute; bottom: 8px; right: 10px;
@@ -395,15 +393,20 @@ body::before {
   border: 1px solid rgba(255,255,255,.06);
   transition: background .3s, border-color .3s;
 }
+
+/* ── Arsenal glyph image ── */
 .arsenal-glyph {
-  width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+  width: 28px; height: 28px;
+  border-radius: 7px; flex-shrink: 0;
+  object-fit: contain;
   background: linear-gradient(135deg, #2a2541, #1a1730);
-  display: flex; align-items: center; justify-content: center;
-  font-family: "Noto Serif JP", serif; font-weight: 900; font-size: 15px;
-  color: #fff;
-  transition: color .3s;
+  padding: 2px;
+  transition: filter .3s;
 }
-.arsenal-item.active .arsenal-glyph { color: var(--tier-color); }
+.arsenal-item.active .arsenal-glyph {
+  filter: drop-shadow(0 0 4px var(--tier-color));
+}
+
 .arsenal-info {
   min-width: 0; flex: 1;
   display: flex; flex-direction: column; gap: 1px;

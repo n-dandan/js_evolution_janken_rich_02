@@ -2,29 +2,32 @@
 const EVOLUTIONS = {
   rock: {
     label: "グー", icon: "✊",
+    imgPrefix: "gu",
     stages: [
-      { name: "石",             glyph: "石",   atk: 10,   tier: 0 },
-      { name: "鉄塊",           glyph: "鉄",   atk: 45,   tier: 1 },
-      { name: "ダイヤモンド",   glyph: "鑽",   atk: 180,  tier: 2 },
-      { name: "ブラックホール", glyph: "黒穴", atk: 9999, tier: 3 },
+      { name: "石",             atk: 10   },
+      { name: "鋼",             atk: 45   },
+      { name: "ダイアモンド",   atk: 180  },
+      { name: "神の感謝の正拳", atk: 9999 },
     ],
   },
   scissors: {
     label: "チョキ", icon: "✌",
+    imgPrefix: "cho",
     stages: [
-      { name: "はさみ",   glyph: "鋏",  atk: 12,   tier: 0 },
-      { name: "鋼の刃",   glyph: "鋼",  atk: 50,   tier: 1 },
-      { name: "レーザー", glyph: "閃",  atk: 200,  tier: 2 },
-      { name: "光の剣",   glyph: "光剣", atk: 9999, tier: 3 },
+      { name: "ハサミ", atk: 12   },
+      { name: "日本刀", atk: 50   },
+      { name: "レーザーカッター", atk: 200  },
+      { name: "悪魔の裁断",       atk: 9999 },
     ],
   },
   paper: {
     label: "パー", icon: "✋",
+    imgPrefix: "par",
     stages: [
-      { name: "紙",           glyph: "紙",  atk: 8,    tier: 0 },
-      { name: "布",           glyph: "布",  atk: 40,   tier: 1 },
-      { name: "防弾シールド", glyph: "盾",  atk: 170,  tier: 2 },
-      { name: "次元の壁",     glyph: "次元", atk: 9999, tier: 3 },
+      { name: "紙",               atk: 8    },
+      { name: "防弾チョッキ",     atk: 40   },
+      { name: "カーボンファイバー", atk: 170  },
+      { name: "女神の結界",       atk: 9999 },
     ],
   },
 };
@@ -34,6 +37,10 @@ const MAX_TIER = 3;
 
 const TIER_COLOR = ["#9a93b8", "#7adfff", "#c98cff", "#ffd66b"];
 const TIER_LABEL = ["NORMAL", "RARE", "EPIC", "LEGENDARY"];
+
+function imgPath(shape, tier) {
+  return `img/${EVOLUTIONS[shape].imgPrefix}_lv${tier + 1}.png`;
+}
 
 function judge(a, b) {
   if (a === b) return 0;
@@ -80,11 +87,10 @@ function renderPanel(panelEl, side, shape, tier, reveal, shuffling) {
   glyphBox.classList.toggle("revealed", reveal);
   glyphBox.classList.toggle("shuffling", shuffling);
 
-  // Glyph text (font-size depends on glyph character count)
-  const glyphText = panelEl.querySelector(".glyph-text");
-  glyphText.textContent = stage.glyph;
-  glyphText.style.fontSize     = stage.glyph.length > 1 ? "56px" : "90px";
-  glyphText.style.letterSpacing = stage.glyph.length > 1 ? "-.04em" : "0";
+  // Glyph image
+  const glyphImg = panelEl.querySelector(".glyph-img");
+  glyphImg.src = imgPath(shape, tier);
+  glyphImg.alt = stage.name;
 
   // Tier badge
   panelEl.querySelector(".tier-badge").textContent = `T${tier + 1}`;
@@ -107,19 +113,18 @@ function renderPanel(panelEl, side, shape, tier, reveal, shuffling) {
 
   // Arsenal
   SHAPES.forEach(s => {
-    const item  = panelEl.querySelector(`.arsenal-item[data-shape="${s}"]`);
-    const ev    = EVOLUTIONS[s];
-    const st    = ev.stages[tier];
+    const item      = panelEl.querySelector(`.arsenal-item[data-shape="${s}"]`);
+    const ev        = EVOLUTIONS[s];
+    const st        = ev.stages[tier];
     const isCurrent = s === shape;
 
     item.classList.toggle("active", isCurrent);
-    item.style.background   = isCurrent ? `${tierColor}14` : "rgba(255,255,255,.025)";
-    item.style.borderColor  = isCurrent ? `${tierColor}55` : "rgba(255,255,255,.06)";
+    item.style.background  = isCurrent ? `${tierColor}14` : "rgba(255,255,255,.025)";
+    item.style.borderColor = isCurrent ? `${tierColor}55` : "rgba(255,255,255,.06)";
 
     const glEl = item.querySelector(".arsenal-glyph");
-    glEl.textContent      = st.glyph;
-    glEl.style.color      = isCurrent ? tierColor : "#fff";
-    glEl.style.letterSpacing = st.glyph.length > 1 ? "-.06em" : "0";
+    glEl.src = imgPath(s, tier);
+    glEl.alt = st.name;
 
     item.querySelector(".arsenal-name").textContent = st.name;
     item.querySelector(".arsenal-lv").textContent   = `Lv.${tier + 1}`;
@@ -138,8 +143,8 @@ function renderResultBanner(result, round, pScore, cScore, lastMove) {
   };
   const c = config[result] || config.idle;
 
-  banner.querySelector(".verdict-en").textContent  = c.en;
-  banner.querySelector(".verdict-jp").textContent  = c.jp;
+  banner.querySelector(".verdict-en").textContent   = c.en;
+  banner.querySelector(".verdict-jp").textContent   = c.jp;
   banner.querySelector(".verdict-hint").textContent = c.hint;
 
   document.getElementById("round-val").textContent = `#${String(round).padStart(2, "0")}`;
@@ -161,25 +166,25 @@ function renderChoiceButtons(playerShape, playerTier, disabled) {
   const tierColor = TIER_COLOR[playerTier];
 
   document.querySelectorAll(".choice-btn").forEach(btn => {
-    const shape = btn.dataset.shape;
-    const stg   = EVOLUTIONS[shape].stages[playerTier];
+    const shape  = btn.dataset.shape;
+    const stg    = EVOLUTIONS[shape].stages[playerTier];
     const active = shape === playerShape;
 
     btn.disabled = disabled;
     btn.classList.toggle("active", active);
 
     const badge = btn.querySelector(".btn-level-badge");
-    badge.textContent   = `L${playerTier + 1}`;
-    badge.style.border  = `1px solid ${tierColor}`;
-    badge.style.color   = tierColor;
+    badge.textContent  = `L${playerTier + 1}`;
+    badge.style.border = `1px solid ${tierColor}`;
+    badge.style.color  = tierColor;
 
     btn.querySelector(".btn-evo-name").textContent = stg.name;
 
     const lvBadge = btn.querySelector(".btn-lv-badge");
-    lvBadge.textContent       = `Lv.${playerTier + 1}`;
-    lvBadge.style.color       = tierColor;
-    lvBadge.style.border      = `1px solid ${tierColor}55`;
-    lvBadge.style.background  = `${tierColor}11`;
+    lvBadge.textContent      = `Lv.${playerTier + 1}`;
+    lvBadge.style.color      = tierColor;
+    lvBadge.style.border     = `1px solid ${tierColor}55`;
+    lvBadge.style.background = `${tierColor}11`;
 
     btn.querySelector(".btn-atk").textContent = `⚔ ${stg.atk.toLocaleString()}`;
   });
@@ -216,9 +221,9 @@ function play(shape) {
   state.reveal    = false;
   render();
 
-  const cpuPick = SHAPES[Math.floor(Math.random() * 3)];
-  let tick = 0;
+  const cpuPick       = SHAPES[Math.floor(Math.random() * 3)];
   const computerPanel = document.getElementById("computer-panel");
+  let tick = 0;
   const cycle = setInterval(() => {
     state.computerShape = SHAPES[tick % 3];
     tick++;
@@ -228,7 +233,7 @@ function play(shape) {
   setTimeout(() => {
     clearInterval(cycle);
 
-    state.shuffling    = false;
+    state.shuffling     = false;
     state.computerShape = cpuPick;
     state.playerShape   = shape;
     state.reveal        = true;
@@ -256,7 +261,7 @@ function play(shape) {
       state.cScore++;
     }
 
-    state.log = [...state.log, { result: r, p: shape, c: cpuPick }];
+    state.log       = [...state.log, { result: r, p: shape, c: cpuPick }];
     state.animating = false;
 
     render();
@@ -290,9 +295,9 @@ document.querySelectorAll(".choice-btn").forEach(btn => {
 document.getElementById("reset-btn").addEventListener("click", reset);
 
 document.addEventListener("keydown", e => {
-  if      (e.key === "1")             play("rock");
-  else if (e.key === "2")             play("scissors");
-  else if (e.key === "3")             play("paper");
+  if      (e.key === "1")               play("rock");
+  else if (e.key === "2")               play("scissors");
+  else if (e.key === "3")               play("paper");
   else if (e.key.toLowerCase() === "r") reset();
 });
 
