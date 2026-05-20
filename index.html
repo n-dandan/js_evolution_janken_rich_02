@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>進化じゃんけん</title>
+<meta name="viewport" content="width=1920, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Header ── -->
+  <header id="header">
+    <div class="header-left">
+      <div class="logo">進</div>
+      <div class="title-block">
+        <div class="title-jp">進化じゃんけん</div>
+        <div class="title-en">EVOLUTION · ROCK PAPER SCISSORS</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="legend">
+        <span class="legend-dot player-dot"></span>
+        <div>
+          <div class="legend-name">あなた</div>
+          <div class="legend-code">PLAYER</div>
+        </div>
+      </div>
+      <div class="legend">
+        <span class="legend-dot computer-dot"></span>
+        <div>
+          <div class="legend-name">コンピュータ</div>
+          <div class="legend-code">CPU</div>
+        </div>
+      </div>
+      <div class="legend">
+        <span class="legend-dot gold-dot"></span>
+        <div>
+          <div class="legend-name">進化</div>
+          <div class="legend-code">EVOLVE</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- ── Computer Hand Panel ── -->
+  <div id="computer-panel" class="hand-panel" data-side="computer" data-tier="0">
+    <div class="panel-bar left"></div>
+    <div class="panel-bar right"></div>
+
+    <div class="panel-identity">
+      <div class="side-label">
+        <span class="side-dot"></span>
+        <span class="side-name">COMPUTER</span>
+      </div>
+      <div class="player-name">AI 対戦相手</div>
+      <div class="panel-meta">BASE : <span class="base-label">パー</span> &nbsp;|&nbsp; ID : #C-XAI</div>
+    </div>
+
+    <div class="glyph-wrapper">
+      <div class="glyph-box revealed">
+        <div class="glyph-ring"></div>
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+        <div class="spark" style="top:14px;left:18px;animation-delay:0s"></div>
+        <div class="spark" style="top:24px;right:22px;animation-delay:.6s"></div>
+        <div class="spark" style="bottom:18px;left:30px;animation-delay:1.1s"></div>
+        <div class="spark" style="bottom:26px;right:14px;animation-delay:1.6s"></div>
+        <div class="glyph-text"></div>
+        <div class="tier-badge">T1</div>
+        <div class="side-arrow">▼</div>
+      </div>
+      <div class="glyph-shadow"></div>
+    </div>
+
+    <div class="panel-stats">
+      <div class="evo-name-block">
+        <div class="evo-name-label">EVOLUTION NAME</div>
+        <div class="evo-name"></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-label">LEVEL</div>
+          <div class="stat-value level-value">Lv.1</div>
+          <div class="stat-sub tier-label-sub">NORMAL</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">ATTACK</div>
+          <div class="stat-value atk-value">0</div>
+          <div class="stat-sub dim">⚔ DAMAGE</div>
+        </div>
+      </div>
+      <div class="progress-bar-row">
+        <div class="progress-seg" data-seg="0"></div>
+        <div class="progress-seg" data-seg="1"></div>
+        <div class="progress-seg" data-seg="2"></div>
+        <div class="progress-seg" data-seg="3"></div>
+        <div class="progress-count">1/4</div>
+      </div>
+    </div>
+
+    <div class="arsenal">
+      <div class="arsenal-label">
+        <span class="arsenal-dot"></span>
+        ARSENAL · 進化状態
+      </div>
+      <div class="arsenal-grid">
+        <div class="arsenal-item" data-shape="rock">
+          <div class="arsenal-glyph"></div>
+          <div class="arsenal-info">
+            <div class="arsenal-base">グー</div>
+            <div class="arsenal-name"></div>
+          </div>
+          <div class="arsenal-lv"></div>
+        </div>
+        <div class="arsenal-item" data-shape="scissors">
+          <div class="arsenal-glyph"></div>
+          <div class="arsenal-info">
+            <div class="arsenal-base">チョキ</div>
+            <div class="arsenal-name"></div>
+          </div>
+          <div class="arsenal-lv"></div>
+        </div>
+        <div class="arsenal-item" data-shape="paper">
+          <div class="arsenal-glyph"></div>
+          <div class="arsenal-info">
+            <div class="arsenal-base">パー</div>
+            <div class="arsenal-name"></div>
+          </div>
+          <div class="arsenal-lv"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── Result Banner ── -->
+  <div id="result-banner" data-result="idle">
+    <div class="banner-last">
+      <span class="last-label">LAST : </span>
+      <span id="last-content"></span>
+    </div>
+    <div class="banner-verdict">
+      <div class="verdict-main">
+        <span class="verdict-en">READY</span>
+        <span class="verdict-divider"></span>
+        <span class="verdict-jp">待機</span>
+      </div>
+      <div class="verdict-hint">手を選択してください</div>
+    </div>
+    <div class="banner-score">
+      <div class="score-item">
+        <div class="score-sub dim">ROUND</div>
+        <div class="score-val" id="round-val">#00</div>
+      </div>
+      <div class="score-sep"></div>
+      <div class="score-item">
+        <div class="score-sub player-sub">YOU</div>
+        <div class="score-val" id="p-score">0</div>
+      </div>
+      <div class="score-dash">—</div>
+      <div class="score-item">
+        <div class="score-sub computer-sub">CPU</div>
+        <div class="score-val" id="c-score">0</div>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- ── Player Hand Panel ── -->
+  <div id="player-panel" class="hand-panel" data-side="player" data-tier="0">
+    <div class="panel-bar left"></div>
+    <div class="panel-bar right"></div>
+
+    <div class="panel-identity">
+      <div class="side-label">
+        <span class="side-dot"></span>
+        <span class="side-name">PLAYER</span>
+      </div>
+      <div class="player-name">あなた</div>
+      <div class="panel-meta">BASE : <span class="base-label">グー</span> &nbsp;|&nbsp; ID : #P-001</div>
+    </div>
+
+    <div class="glyph-wrapper">
+      <div class="glyph-box revealed">
+        <div class="glyph-ring"></div>
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+        <div class="spark" style="top:14px;left:18px;animation-delay:0s"></div>
+        <div class="spark" style="top:24px;right:22px;animation-delay:.6s"></div>
+        <div class="spark" style="bottom:18px;left:30px;animation-delay:1.1s"></div>
+        <div class="spark" style="bottom:26px;right:14px;animation-delay:1.6s"></div>
+        <div class="glyph-text"></div>
+        <div class="tier-badge">T1</div>
+        <div class="side-arrow">▲</div>
+      </div>
+      <div class="glyph-shadow"></div>
+    </div>
+
+    <div class="panel-stats">
+      <div class="evo-name-block">
+        <div class="evo-name-label">EVOLUTION NAME</div>
+        <div class="evo-name"></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-label">LEVEL</div>
+          <div class="stat-value level-value">Lv.1</div>
+          <div class="stat-sub tier-label-sub">NORMAL</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">ATTACK</div>
+          <div class="stat-value atk-value">0</div>
+          <div class="stat-sub dim">⚔ DAMAGE</div>
+        </div>
+      </div>
+      <div class="progress-bar-row">
+        <div class="progress-seg" data-seg="0"></div>
+        <div class="progress-seg" data-seg="1"></div>
+        <div class="progress-seg" data-seg="2"></div>
+        <div class="progress-seg" data-seg="3"></div>
+        <div class="progress-count">1/4</div>
+      </div>
+    </div>
+
+    <div class="arsenal">
+      <div class="arsenal-label">
+        <span class="arsenal-dot"></span>
+        ARSENAL · 進化状態
+      </div>
+      <div class="arsenal-grid">
+        <div class="arsenal-item" data-shape="rock">
+          <div class="arsenal-glyph"></div>
+          <div class="arsenal-info">
+            <div class="arsenal-base">グー</div>
+            <div class="arsenal-name"></div>
+          </div>
+          <div class="arsenal-lv"></div>
+        </div>
+        <div class="arsenal-item" data-shape="scissors">
+          <div class="arsenal-glyph"></div>
+          <div class="arsenal-info">
+            <div class="arsenal-base">チョキ</div>
+            <div class="arsenal-name"></div>
+          </div>
+          <div class="arsenal-lv"></div>
+        </div>
+        <div class="arsenal-item" data-shape="paper">
+          <div class="arsenal-glyph"></div>
+          <div class="arsenal-info">
+            <div class="arsenal-base">パー</div>
+            <div class="arsenal-name"></div>
+          </div>
+          <div class="arsenal-lv"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Choice Buttons ── -->
+  <div id="choice-buttons">
+    <button class="choice-btn active" data-shape="rock">
+      <div class="btn-icon">
+        <span class="btn-icon-glyph">✊</span>
+        <span class="btn-level-badge">L1</span>
+      </div>
+      <div class="btn-labels">
+        <div class="btn-label-top">
+          <span class="btn-select">SELECT</span>
+          <span class="btn-name-jp">グー</span>
+        </div>
+        <div class="btn-label-bottom">
+          <span class="btn-now">NOW</span>
+          <span class="btn-evo-name"></span>
+          <span class="btn-lv-badge">Lv.1</span>
+          <span class="btn-atk"></span>
+        </div>
+      </div>
+      <div class="btn-key">
+        <div>KEY</div>
+        <div class="btn-key-val">[1]</div>
+      </div>
+    </button>
+    <button class="choice-btn" data-shape="scissors">
+      <div class="btn-icon">
+        <span class="btn-icon-glyph">✌</span>
+        <span class="btn-level-badge">L1</span>
+      </div>
+      <div class="btn-labels">
+        <div class="btn-label-top">
+          <span class="btn-select">SELECT</span>
+          <span class="btn-name-jp">チョキ</span>
+        </div>
+        <div class="btn-label-bottom">
+          <span class="btn-now">NOW</span>
+          <span class="btn-evo-name"></span>
+          <span class="btn-lv-badge">Lv.1</span>
+          <span class="btn-atk"></span>
+        </div>
+      </div>
+      <div class="btn-key">
+        <div>KEY</div>
+        <div class="btn-key-val">[2]</div>
+      </div>
+    </button>
+    <button class="choice-btn" data-shape="paper">
+      <div class="btn-icon">
+        <span class="btn-icon-glyph">✋</span>
+        <span class="btn-level-badge">L1</span>
+      </div>
+      <div class="btn-labels">
+        <div class="btn-label-top">
+          <span class="btn-select">SELECT</span>
+          <span class="btn-name-jp">パー</span>
+        </div>
+        <div class="btn-label-bottom">
+          <span class="btn-now">NOW</span>
+          <span class="btn-evo-name"></span>
+          <span class="btn-lv-badge">Lv.1</span>
+          <span class="btn-atk"></span>
+        </div>
+      </div>
+      <div class="btn-key">
+        <div>KEY</div>
+        <div class="btn-key-val">[3]</div>
+      </div>
+    </button>
+  </div>
+
+  <!-- ── Reset Area ── -->
+  <div id="reset-area">
+    <div id="session-log">
+      <span class="log-label">SESSION LOG : </span>
+      <span id="log-entries"><span class="dim">戦闘開始を待機中…</span></span>
+    </div>
+    <button id="reset-btn">
+      <span class="reset-icon">↺</span>
+      リセット
+      <span class="reset-en">RESET</span>
+    </button>
+  </div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
